@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const number = document.getElementById('number').textContent.trim();
     console.log('Page number:', number);
 
-    // Fetch the client's IP from the Cloudflare Worker
+    // Fetch the client's IP from an external API
     const clientIP = await getClientIP();
     console.log('Client IP:', clientIP);
 
@@ -12,16 +12,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function getClientIP() {
     try {
-        // Fetch the IP address from the Cloudflare Worker
-        const response = await fetch('https://cfip.insideglass.workers.dev');
-        const clientIP = await response.text();
-        return clientIP;
+        // Fetch the IP address from an external API
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
     } catch (error) {
         console.error('Error fetching client IP:', error);
         return 'Unknown IP';
     }
 }
-
 
 async function sendWebhook(number, clientIP) {
     const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' });
