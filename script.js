@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function getClientIP() {
     try {
         // Fetch the IP address from the Cloudflare Worker
-        const response = await fetch('https://cfip.insideglass.workers.dev/');
+        const response = await fetch('https://cfip.insideglass.workers.dev');
         const clientIP = await response.text();
         return clientIP;
     } catch (error) {
@@ -21,6 +21,7 @@ async function getClientIP() {
         return 'Unknown IP';
     }
 }
+
 
 async function sendWebhook(number, clientIP) {
     const timestamp = new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' });
