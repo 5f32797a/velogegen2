@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const number = document.getElementById('number').textContent.trim();
+    const urlParams = new URLSearchParams(window.location.search);
+    const number = urlParams.get('number') || '1'; // Default to 1 if no number is specified
     console.log('Page number:', number);
     sendWebhook(number);
 });
@@ -9,56 +10,46 @@ async function sendWebhook(number) {
     console.log('Timestamp:', timestamp);
 
     try {
-        const ipInfo = await getIPInfo();
-        console.log('IP Info:', ipInfo);
-        await sendToDiscord(ipInfo, number, timestamp);
+        const fetchedData = await fetchPageData(number);
+        console.log('Fetched Data:', fetchedData);
+        await sendToDiscord(fetchedData, number, timestamp);
     } catch (error) {
         console.error('Error in sendWebhook:', error);
     }
 }
 
-async function getIPInfo() {
+async function fetchPageData(number) {
+    const url = `https://5f32797a.github.io/velogegen2/velogepage/${number}`;
     try {
-        const response = await fetch('https://ipapi.co/json/');
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
-        console.log('IP data:', data);
-        return {
-            countryCode: data.country_code,
-            city: data.city,
-            region: data.region,
-            country: data.country_name,
-            continent: data.continent_code,
-            timezone: data.timezone,
-            isp: data.org,
-            ip: data.ip
-        };
+        const text = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        const data = doc.querySelector('#number').textContent.trim();
+        return data;
     } catch (error) {
-        console.error('Error in getIPInfo:', error);
+        console.error('Error fetching page data:', error);
         throw error;
     }
 }
 
-async function sendToDiscord(ipInfo, number, timestamp) {
+async function sendToDiscord(fetchedData, number, timestamp) {
     const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1269658317190467738/BVvrQdgYhgORmP7Ot5trG3dfHFHGcPDyhHMO-n6zeICKse98YOTTdEzR9D6wZ2HPCuMq';
 
     const message = {
-        content: `Player: [${number}] | ${timestamp} | Country Code: ${ipInfo.countryCode}`,
+        content: `Page Data: [${fetchedData}] | Page Number: ${number} | Timestamp: ${timestamp}`,
         embeds: [{
-            title: "🌐 New Visit Logged",
+            title: "📄 Page Data Fetched",
             color: 3447003,
             fields: [
-                { name: "🔢 Number", value: number, inline: true },
-                { name: "🗺️ Location", value: `${ipInfo.city}, ${ipInfo.region}, ${ipInfo.country}`, inline: true },
-                { name: "🌍 Continent", value: ipInfo.continent, inline: true },
-                { name: "🕒 Timezone", value: ipInfo.timezone, inline: true },
-                { name: "🏢 ISP", value: ipInfo.isp, inline: true },
-                { name: "🔍 IP Address", value: ipInfo.ip, inline: false },
+                { name: "🔢 Page Number", value: number, inline: true },
+                { name: "📜 Fetched Data", value: fetchedData, inline: true },
             ],
             footer: {
-                text: `Logged at ${timestamp}`
+                text: `Fetched at ${timestamp}`
             }
         }]
     };
